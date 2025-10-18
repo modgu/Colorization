@@ -8,16 +8,11 @@
           "nixPkgs": [
             "python312",
             "libglvnd",
+            "mesa",
             "glib",
             "xorg.libX11",
             "xorg.libXext",
-            "xorg.libXrender",
-            "xorg.libXtst",
-            "xorg.libXi",
-            "xorg.libXrandr",
-            "xorg.libXfixes",
-            "xorg.libXcursor",
-            "xorg.libXinerama"
+            "xorg.libXrender"
           ]
         }
       }
