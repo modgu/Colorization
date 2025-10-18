@@ -28,7 +28,7 @@ class Args:
 
 args = Args()
 device = "cpu"
-colorizer = MangaColorizator(device, args.generator, args.extractor)
+colorizer = MangaColorizator(device, args.generator, None)
 
 # Resource monitoring functions
 def monitor_usage(log_interval=1):
