@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head><title>Gallery</title></head>
+<body>
+<h2>Your Session Gallery</h2>
+
+<h3>Uploaded Images</h3>
+{% for img in uploaded_images %}
+    <img src="{{ img }}" width="150">
+{% endfor %}
+
+<h3>Colorized Images</h3>
+{% for img in colorized_images %}
+    <img src="{{ img }}" width="150">
+{% endfor %}
+
+<a href="/">Upload More</a>
+<a href="/end_session">End Session</a>
+</body>
+</html>

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Manga Colorizer</title>
+<style>
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #1e1e1e;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    padding: 30px;
+}
+.container {
+    max-width: 1000px;
+    width: 100%;
+    background: #2e2e2e;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 0 20px #000;
+}
+h1 {
+    text-align: center;
+    margin-bottom: 25px;
+}
+.upload-section {
+    text-align: center;
+    margin-bottom: 30px;
+}
+input[type="file"] {
+    display: none;
+}
+.custom-file-upload {
+    border: 2px solid #ff6600;
+    display: inline-block;
+    padding: 12px 25px;
+    cursor: pointer;
+    border-radius: 8px;
+    font-weight: bold;
+    background: #333;
+    color: #ff6600;
+    transition: 0.3s;
+}
+.custom-file-upload:hover {
+    background: #ff6600;
+    color: #333;
+}
+button {
+    padding: 12px 25px;
+    font-size: 16px;
+    border: none;
+    background: #ff6600;
+    color: #fff;
+    cursor: pointer;
+    border-radius: 8px;
+    margin-left: 10px;
+    transition: 0.3s;
+}
+button:hover:enabled {
+    background: #ff8533;
+}
+button:disabled {
+    background: #666;
+    cursor: not-allowed;
+}
+.image-row {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 25px;
+    align-items: flex-start;
+}
+.image-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position:relative;
+}
+
+.delete-btn {
+    color: red;
+    cursor: pointer;
+    font-size: 22px;
+    position: absolute;
+    top: -10px;
+    left: -10px; /* moved to left */
+    background: #222;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-weight: bold;
+    z-index: 2;
+}
+
+img.preview {
+    border-radius: 10px;
+    border: 2px solid #444;
+    margin-bottom: 10px;
+    max-width: 458px; /* default preview size */
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+img.preview:hover {
+    transform: scale(1.05);
+}
+.placeholder {
+    width: 300px;
+    height: 300px;
+    border:2px dashed #666;
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#666;
+}
+#file-name {
+    margin-left: 10px;
+    color: #ff8533;
+    font-weight: bold;
+}
+
+/* Lightbox */
+#lightbox {
+    position: fixed;
+    display: none;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(8px);
+    background-color: rgba(0,0,0,0.7);
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+#lightbox img {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 10px;
+    border: 2px solid #fff;
+}
+#lightbox .close-btn {
+    position: absolute;
+    top: 20px;
+    right: 40px;
+    font-size: 30px;
+    font-weight: bold;
+    color: #fff;
+    cursor: pointer;
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>Manga Colorizer</h1>
+<!-- Upload Form -->
+    <form id="upload-form" class="upload-section" enctype="multipart/form-data">
+        <label class="custom-file-upload">
+            Choose Files
+            <input type="file" id="images-input" name="images" multiple accept=".jpg,.jpeg,.png" onchange="updateFileName(this)">
+        </label>
+        <span id="file-name"></span>
+        <button type="submit">Upload & Preview</button>
+    </form>
+
+    <!-- Image Grid -->
+    <div class="image-grid">
+        {% for original, colorized in pairs %}
+        <div class="image-row" data-file="{{ original }}">
+            <div class="image-container">
+                <span class="delete-btn" onclick="deleteImage('{{ original }}', this)">🗑️</span>
+                <img src="{{ url_for('static', filename='tmp_sessions/' + session['workspace_id'] + '/uploads/' + original) }}"
+                     class="preview" onclick="openLightbox(this)">
+                <button class="colorize-btn" {% if colorized %} disabled {% endif %} onclick="colorizeImage('{{ original }}', this)">
+                    {% if colorized %} Colorized {% else %} Colorize {% endif %}
+                </button>
+            </div>
+            <div class="image-container">
+                <p>Colorized</p>
+                {% if colorized %}
+                <img src="{{ url_for('static', filename='tmp_sessions/' + session['workspace_id'] + '/colorized/' + colorized) }}"
+                     class="preview" onclick="openLightbox(this)">
+                {% else %}
+                <div class="placeholder">Not Colorized Yet</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox">
+    <span class="close-btn" onclick="closeLightbox()">&times;</span>
+    <img id="lightbox-img" src="">
+</div>
+
+<script>
+function updateFileName(input) {
+    const fileNames = Array.from(input.files).map(f => f.name).join(', ');
+    document.getElementById('file-name').textContent = fileNames;
+}
+
+// Upload & Preview via AJAX
+document.getElementById('upload-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    const formData = new FormData(this);
+    formData.append('ajax', '1'); // mark as ajax
+    fetch("/", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        const uploadFolder = data.upload_folder;
+        const uploaded = data.uploaded;
+        uploaded.forEach(fileName => {
+            const row = document.createElement('div');
+            row.className = 'image-row';
+            row.setAttribute('data-file', fileName);
+            row.innerHTML = `
+                <div class="image-container">
+                    <span class="delete-btn" onclick="deleteImage('${fileName}', this)">🗑️</span>
+                    <img src="${uploadFolder}/${fileName}" class="preview" onclick="openLightbox(this)">
+                    <button class="colorize-btn" onclick="colorizeImage('${fileName}', this)">Colorize</button>
+                </div>
+                <div class="image-container">
+                    <p>Colorized</p>
+                    <div class="placeholder">Not Colorized Yet</div>
+                </div>
+            `;
+            document.querySelector('.image-grid').appendChild(row);
+        });
+        document.getElementById('images-input').value = '';
+        document.getElementById('file-name').textContent = '';
+    })
+    .catch(err => alert('Error uploading images'));
+});
+
+// Colorize image via AJAX
+function colorizeImage(imgName, btn){
+    btn.disabled = true;
+    btn.innerText = 'Colorizing...';
+    btn.style.opacity = 0.6;
+    btn.style.cursor = 'not-allowed';
+
+    const formData = new FormData();
+    formData.append('img_name', imgName);
+    formData.append('action', 'colorize_ajax');
+
+    fetch("/", { method: "POST", body: formData })
+    .then(res => res.json())
+    .then(data => {
+        const row = document.querySelector(`.image-row[data-file='${imgName}']`);
+        const colContainer = row.querySelectorAll('.image-container')[1];
+        colContainer.innerHTML = `<img src="${data.colorized}" class="preview" onclick="openLightbox(this)">`;
+    })
+    .catch(err => alert('Error colorizing image'));
+}
+
+// Delete image via AJAX
+function deleteImage(imgName, btn){
+    const formData = new FormData();
+    formData.append('img_name', imgName);
+    formData.append('action', 'delete_ajax');
+
+    fetch("/delete_image", { method: "POST", body: formData })
+    .then(res => {
+        if(res.ok){
+            const row = btn.closest('.image-row');
+            row.remove();
+        } else alert('Error deleting image');
+    })
+    .catch(err => alert('Error deleting image'));
+}
+
+// Lightbox
+function openLightbox(img) {
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+    lightbox.style.display = 'flex';
+    lightboxImg.src = img.src;
+}
+function closeLightbox() {
+    document.getElementById('lightbox').style.display = 'none';
+}
+</script>
+</body>
+</html>
+
