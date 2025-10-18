@@ -1,27 +1,27 @@
-# Use a lightweight Python image
+# Use a lightweight Python base image
 FROM python:3.12-slim
 
-# Set the working directory inside the container
+# Set working directory
 WORKDIR /app
 
-# Install system dependencies required by OpenCV
+# Install system dependencies for OpenCV
 RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
+    libgl1 \
     libglib2.0-0 \
     libsm6 \
     libxrender1 \
     libxext6 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy dependency list and install Python packages
+# Copy requirements and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy all your project files into the container
+# Copy project files
 COPY . .
 
-# Expose port 8080 for Railway
+# Expose port for Railway
 EXPOSE 8080
 
-# Start the app using Gunicorn
+# Start Flask app with Gunicorn
 CMD ["gunicorn", "-b", "0.0.0.0:8080", "main:app"]
