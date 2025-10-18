@@ -9,7 +9,7 @@ from utils.utils import resize_pad
 class MangaColorizator:
     def __init__(self, device, generator_path = 'networks/generator.zip', extractor_path = 'networks/extractor.pth'):
         self.colorizer = Colorizer().to(device)
-        self.colorizer.generator.load_state_dict(torch.load(generator_path, map_location = device))
+        self.colorizer.generator.load_state_dict(torch.load(generator_path, map_location = device,weights_only=False))
         self.colorizer = self.colorizer.eval()
         
         self.denoiser = FFDNetDenoiser(device)
