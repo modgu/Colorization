@@ -5,7 +5,20 @@
     "nixpacksPlan": {
       "phases": {
         "setup": {
-          "nixPkgs": ["python312", "libglvnd", "glib", "libxkbcommon", "libxcb"]
+          "nixPkgs": [
+            "python312",
+            "libglvnd",
+            "glib",
+            "xorg.libX11",
+            "xorg.libXext",
+            "xorg.libXrender",
+            "xorg.libXtst",
+            "xorg.libXi",
+            "xorg.libXrandr",
+            "xorg.libXfixes",
+            "xorg.libXcursor",
+            "xorg.libXinerama"
+          ]
         }
       }
     }
