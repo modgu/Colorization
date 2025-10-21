@@ -5,11 +5,14 @@ import numpy as np
 from networks.models import Colorizer
 from denoising.denoiser import FFDNetDenoiser
 from utils.utils import resize_pad
+from torch.package import PackageImporter
 
 class MangaColorizator:
-    def __init__(self, device, generator_path = 'networks/generator.zip', extractor_path = 'networks/extractor.pth'):
+    def __init__(self, device, generator_path = 'networks/generator.pth', extractor_path = 'networks/extractor.pth'):
         self.colorizer = Colorizer().to(device)
-        self.colorizer.generator.load_state_dict(torch.load(generator_path, map_location = device,weights_only=False))
+
+        self.colorizer.generator.load_state_dict(torch.load(generator_path, map_location = device))
+
         self.colorizer = self.colorizer.eval()
         
         self.denoiser = FFDNetDenoiser(device)
