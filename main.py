@@ -126,12 +126,12 @@ def index():
         name, _ = os.path.splitext(img_name)
         colorized_filename = f"{name}_colorized.png"
         colorized_path = os.path.join(colorized_dir, colorized_filename)
-        """""""""
+
         if not os.path.exists(colorized_path):
             # Run colorization with monitoring
             run_with_monitor(lambda: colorize_single_image(upload_path, colorized_path, colorizer, args))
          
-         """
+
 
         colorized_url = url_for("static", filename=f"tmp_sessions/{session['workspace_id']}/colorized/{colorized_filename}")
         return jsonify({"colorized": colorized_url})
