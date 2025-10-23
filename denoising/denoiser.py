@@ -43,7 +43,7 @@ class FFDNetDenoiser:
             device_ids = [0]
             self.model = nn.DataParallel(self.model, device_ids=device_ids).cuda()
         else:
-            state_dict = torch.load(weights_path, map_location='cpu')
+            state_dict = torch.load(weights_path, map_location='cpu',weights_only=False)
             # CPU mode: remove the DataParallel wrapper
             state_dict = remove_dataparallel_wrapper(state_dict)
         self.model.load_state_dict(state_dict)
