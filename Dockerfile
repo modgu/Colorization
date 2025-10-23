@@ -27,5 +27,10 @@ RUN mkdir -p /mnt/data
 # Expose port 8080 (Railway’s default web port)
 EXPOSE 8080
 
-# Start Flask app with Gunicorn (production-ready server)
-CMD ["gunicorn", "-b", "0.0.0.0:8080", "main:app"]
+# Use unbuffered output for Python (so print() shows immediately)
+ENV PYTHONUNBUFFERED=1
+
+# Start Flask app with Gunicorn (production-ready)
+# - "--access-logfile -" and "--error-logfile -" send logs to stdout
+# - "--capture-output" forwards print() and traceback output to Railway logs
+CMD ["gunicorn", "-b", "0.0.0.0:8080", "--access-logfile", "-", "--error-logfile", "-", "--capture-output", "main:app"]
