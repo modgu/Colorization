@@ -33,20 +33,40 @@ class FFDNetDenoiser:
         self.model = FFDNet(num_input_channels = _in_ch)
         self.load_weights()
         self.model.eval()
-       
-    
+
     def load_weights(self):
+        import os
+        import traceback
+
         weights_name = 'net_rgb.pth' if self.channels == 3 else 'net_gray.pth'
         weights_path = os.path.join(self.weights_dir, weights_name)
-        if self.device == 'cuda':
-            state_dict = torch.load(weights_path, map_location=torch.device('cpu'))
-            device_ids = [0]
-            self.model = nn.DataParallel(self.model, device_ids=device_ids).cuda()
+        print(f"🔍 [FFDNetDenoiser] Trying to load weights from: {weights_path}")
+
+        if os.path.exists(weights_path):
+            size = os.path.getsize(weights_path)
+            print(f"✅ [FFDNetDenoiser] File found ({size / 1024:.2f} KB)")
         else:
-            state_dict = torch.load(weights_path, map_location='cpu',weights_only=False)
-            # CPU mode: remove the DataParallel wrapper
-            state_dict = remove_dataparallel_wrapper(state_dict)
-        self.model.load_state_dict(state_dict)
+            print(f"❌ [FFDNetDenoiser] File not found at {weights_path}")
+            return
+
+        try:
+            if self.device == 'cuda':
+                print("⚙️ Using CUDA mode for loading weights")
+                state_dict = torch.load(weights_path, map_location=torch.device('cpu'), weights_only=False)
+                device_ids = [0]
+                self.model = nn.DataParallel(self.model, device_ids=device_ids).cuda()
+            else:
+                print("⚙️ Using CPU mode for loading weights")
+                state_dict = torch.load(weights_path, map_location='cpu', weights_only=False)
+                state_dict = remove_dataparallel_wrapper(state_dict)
+
+            self.model.load_state_dict(state_dict)
+            print("✅ [FFDNetDenoiser] Weights successfully loaded!")
+
+        except Exception as e:
+            print("❌ [FFDNetDenoiser] Failed to load weights!")
+            print(f"Error: {e}")
+            traceback.print_exc()
         
     def get_denoised_image(self, imorig, sigma = None):
         

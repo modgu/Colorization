@@ -1,8 +1,3 @@
 import torch
-from networks.models import Colorizer
-
-device = "cpu"
-colorizer = Colorizer()
-colorizer.generator.load_state_dict(torch.load("networks/generator.zip", map_location=device))
-torch.save(colorizer.generator.state_dict(), "networks/generator.pth")
-print("✅ Converted generator.zip → generator.pth")
+torch.load("denoising/models/net_rgb.pth", map_location="cpu", weights_only=False)
+print("✅ File loads fine!")
