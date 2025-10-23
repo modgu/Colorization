@@ -4,17 +4,52 @@ import shutil
 import threading
 import time
 import psutil
-from flask import Flask, request, render_template, session, jsonify, url_for,redirect
+from flask import Flask, request, render_template, session, jsonify, url_for,redirect,send_from_directory
 from werkzeug.utils import secure_filename
 from colorizator import MangaColorizator
 from inference import colorize_single_image
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey"  # Required for session management
+app.secret_key = "supersecretkey"  #
 
 # Base folder for temporary session files
 SESSION_BASE = "static/tmp_sessions"
 os.makedirs(SESSION_BASE, exist_ok=True)
+
+VOLUME_PATH = "/data"
+os.makedirs(VOLUME_PATH, exist_ok=True)
+UPLOAD_KEY = os.getenv("UPLOAD_KEY", "onepiece123onepiece")
+
+@app.route("/uploadModel", methods=["POST"])
+def upload_file():
+    key = request.form.get("key")
+    if key != UPLOAD_KEY:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    if "file" not in request.files:
+        return jsonify({"error": "No file provided"}), 400
+
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"error": "Empty filename"}), 400
+
+    save_path = os.path.join(VOLUME_PATH, file.filename)
+    file.save(save_path)
+
+    return jsonify({"message": f"✅ Uploaded {file.filename} successfully.", "path": save_path}), 200
+
+
+@app.route("/modelFiles", methods=["GET"])
+def list_files():
+    files = os.listdir(VOLUME_PATH)
+    return jsonify({"files": files})
+
+@app.route("/download/<path:filename>", methods=["GET"])
+def download_file(filename):
+    try:
+        return send_from_directory(VOLUME_PATH, filename, as_attachment=False)
+    except FileNotFoundError:
+        return jsonify({"error": "File not found"}), 404
 
 # Args class for colorization parameters
 class Args:
@@ -23,12 +58,12 @@ class Args:
         self.denoiser = denoiser
         self.denoiser_sigma = denoiser_sigma
         self.size = size
-        self.generator = "networks/generator.zip"
+        self.generator = "networks/generator.pth"
         self.extractor = "networks/extractor.pth"
 
 args = Args()
 device = "cpu"
-colorizer = MangaColorizator(device, args.generator, None)
+#colorizer = MangaColorizator(device, args.generator, None)
 
 # Resource monitoring functions
 def monitor_usage(log_interval=1):
@@ -120,10 +155,12 @@ def index():
         name, _ = os.path.splitext(img_name)
         colorized_filename = f"{name}_colorized.png"
         colorized_path = os.path.join(colorized_dir, colorized_filename)
-
+        """""""""
         if not os.path.exists(colorized_path):
             # Run colorization with monitoring
             run_with_monitor(lambda: colorize_single_image(upload_path, colorized_path, colorizer, args))
+         
+         """
 
         colorized_url = url_for("static", filename=f"tmp_sessions/{session['workspace_id']}/colorized/{colorized_filename}")
         return jsonify({"colorized": colorized_url})
