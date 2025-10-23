@@ -23,7 +23,7 @@ class MangaColorizator:
         
         self.device = device
         
-    def set_image(self, image, size = 576, apply_denoise = True, denoise_sigma = 25, transform = ToTensor()):
+    def set_image(self, image, size = 128, apply_denoise = True, denoise_sigma = 25, transform = ToTensor()):
         if (size % 32 != 0):
             raise RuntimeError("size is not divisible by 32")
         
