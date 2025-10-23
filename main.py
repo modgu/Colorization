@@ -18,38 +18,9 @@ os.makedirs(SESSION_BASE, exist_ok=True)
 
 VOLUME_PATH = "/data"
 os.makedirs(VOLUME_PATH, exist_ok=True)
-UPLOAD_KEY = os.getenv("UPLOAD_KEY", "onepiece123onepiece")
 
-@app.route("/uploadModel", methods=["POST"])
-def upload_file():
-    key = request.form.get("key")
-    if key != UPLOAD_KEY:
-        return jsonify({"error": "Unauthorized"}), 403
+MODEL_PATH = "/data/model/generator.pth"
 
-    if "file" not in request.files:
-        return jsonify({"error": "No file provided"}), 400
-
-    file = request.files["file"]
-    if file.filename == "":
-        return jsonify({"error": "Empty filename"}), 400
-
-    save_path = os.path.join(VOLUME_PATH, file.filename)
-    file.save(save_path)
-
-    return jsonify({"message": f"✅ Uploaded {file.filename} successfully.", "path": save_path}), 200
-
-
-@app.route("/modelFiles", methods=["GET"])
-def list_files():
-    files = os.listdir(VOLUME_PATH)
-    return jsonify({"files": files})
-
-@app.route("/download/<path:filename>", methods=["GET"])
-def download_file(filename):
-    try:
-        return send_from_directory(VOLUME_PATH, filename, as_attachment=False)
-    except FileNotFoundError:
-        return jsonify({"error": "File not found"}), 404
 
 # Args class for colorization parameters
 class Args:
@@ -58,12 +29,12 @@ class Args:
         self.denoiser = denoiser
         self.denoiser_sigma = denoiser_sigma
         self.size = size
-        self.generator = "networks/generator.pth"
+        self.generator = MODEL_PATH
         self.extractor = "networks/extractor.pth"
 
 args = Args()
 device = "cpu"
-#colorizer = MangaColorizator(device, args.generator, None)
+colorizer = MangaColorizator(device, args.generator, None)
 
 # Resource monitoring functions
 def monitor_usage(log_interval=1):
