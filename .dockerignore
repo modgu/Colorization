@@ -1,0 +1,54 @@
+# --- Python cache & environment files ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+*.log
+
+# --- Virtual environments ---
+venv/
+.env/
+.env.bak/
+
+# --- IDE & OS-specific files ---
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# --- Git & CI/CD ---
+.git/
+.gitignore
+.gitattributes
+.github/
+.gitmodules
+
+# --- Large model & dataset files ---
+*.pth
+*.pt
+*.zip
+*.h5
+*.ckpt
+*.onnx
+
+# --- Temporary or generated files ---
+tmp/
+temp/
+cache/
+logs/
+uploads/
+tests/__pycache__/
+*.sqlite3
+*.db
+
+# --- Frontend / Node builds (if any) ---
+node_modules/
+dist/
+build/
+
+# --- Docker ---
+Dockerfile*
+docker-compose.yml
